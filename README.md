@@ -1,5 +1,5 @@
 # CPSC3300-Project-2
-
+By: Alex Salazar and Joe Pugmire
 
 CPSC3300 Project 2
 In this project you are asked to simulate a CPU (as seen in textbook 4.4). The instructions
