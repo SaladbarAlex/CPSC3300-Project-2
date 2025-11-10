@@ -7,6 +7,7 @@ from .controller import RunController
 from .assembler import assemble
 
 def load_bin_words(path: str) -> List[int]:
+    """Read hex/decimal words from a text file into a list of ints."""
     words = []
     with open(path, 'r') as f:
         for line in f:
@@ -25,6 +26,7 @@ def load_bin_words(path: str) -> List[int]:
     return words
 
 def main():
+    """Entry point that assembles or runs programs under the CPU model."""
     p = argparse.ArgumentParser(description="CPSC3300 CPU Simulator (MVC + Observer, single-cycle MIPS-like)")
     p.add_argument("program", help="Path to .bin (hex words per line) or .asm (mini-assembler)")
     p.add_argument("--step", action="store_true", help="Enable interactive single-step mode")

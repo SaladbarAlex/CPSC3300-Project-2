@@ -48,12 +48,14 @@ class DecodedInstr:
     mnemonic: Optional[str] = None
 
 def sign_extend_16(x: int) -> int:
+    """Convert a 16-bit immediate into a Python int with sign extension."""
     x &= 0xFFFF
     if x & 0x8000:
         return x - 0x10000
     return x
 
 def decode(word: int) -> DecodedInstr:
+    """Break a 32-bit instruction word into its constituent fields."""
     if word == HALT_WORD:
         return DecodedInstr(raw=word, opcode=-1, mnemonic="halt")
     opcode = (word >> 26) & 0x3F
@@ -81,12 +83,15 @@ def decode(word: int) -> DecodedInstr:
         return DecodedInstr(raw=word, opcode=opcode, mnemonic="unknown")
 
 def encode_r(rs, rt, rd, shamt, funct):
+    """Build an R-type instruction word from its fields."""
     return (OP_RTYPE << 26) | (rs << 21) | (rt << 16) | (rd << 11) | (shamt << 6) | funct
 
 def encode_i(op, rs, rt, imm):
+    """Build an I-type instruction word with a 16-bit immediate."""
     imm &= 0xFFFF
     return (op << 26) | (rs << 21) | (rt << 16) | imm
 
 def encode_j(op, addr):
+    """Build a J-type instruction word from opcode and 26-bit address."""
     addr &= 0x3FFFFFF
     return (op << 26) | addr

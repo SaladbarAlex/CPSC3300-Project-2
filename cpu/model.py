@@ -6,6 +6,7 @@ from . import isa
 WORD = 4
 
 def mask32(x:int) -> int:
+    """Force a value into the unsigned 32-bit range."""
     return x & 0xFFFFFFFF
 
 @dataclass
@@ -14,22 +15,26 @@ class Memory:
     data: bytearray = field(default_factory=lambda: bytearray(64*1024))
 
     def read_word(self, addr: int) -> int:
+        """Return a 32-bit aligned word, raising on misaligned/OOB addresses."""
         if addr % 4 != 0 or addr < 0 or addr+3 >= self.size_bytes:
             raise MemoryError(f"Unaligned or OOB word read @0x{addr:08X}")
         b = self.data[addr:addr+4]
         return int.from_bytes(b, byteorder="big", signed=False)
 
     def write_word(self, addr: int, value: int):
+        """Store a 32-bit aligned word after clamping to 32 bits."""
         if addr % 4 != 0 or addr < 0 or addr+3 >= self.size_bytes:
             raise MemoryError(f"Unaligned or OOB word write @0x{addr:08X}")
         self.data[addr:addr+4] = mask32(value).to_bytes(4, byteorder="big", signed=False)
 
     def read_byte(self, addr: int) -> int:
+        """Read a byte while checking bounds."""
         if addr < 0 or addr >= self.size_bytes:
             raise MemoryError(f"OOB byte read @0x{addr:08X}")
         return self.data[addr]
 
     def write_byte(self, addr: int, value: int):
+        """Write a byte while checking bounds and masking to 8 bits."""
         if addr < 0 or addr >= self.size_bytes:
             raise MemoryError(f"OOB byte write @0x{addr:08X}")
         self.data[addr] = value & 0xFF
@@ -39,27 +44,34 @@ class RegisterFile:
     regs: List[int] = field(default_factory=lambda: [0]*32)
 
     def __getitem__(self, idx: int) -> int:
+        """Expose register contents while enforcing $zero immutability."""
         return self.regs[idx] if idx != 0 else 0  # $zero stays 0
 
     def __setitem__(self, idx: int, value: int):
+        """Write a register unless the target is $zero, matching hardware."""
         if idx != 0:
             self.regs[idx] = mask32(value)
 
 @dataclass
 class ALU:
     def add(self, a:int, b:int) -> int:
+        """Return (a + b) with 32-bit wraparound."""
         return mask32((a + b) & 0xFFFFFFFF)
 
     def sub(self, a:int, b:int) -> int:
+        """Return (a - b) with 32-bit wraparound."""
         return mask32((a - b) & 0xFFFFFFFF)
 
     def bitand(self, a:int, b:int) -> int:
+        """Return a & b constrained to 32 bits."""
         return mask32(a & b)
 
     def bitor(self, a:int, b:int) -> int:
+        """Return a | b constrained to 32 bits."""
         return mask32(a | b)
 
     def slt(self, a:int, b:int) -> int:
+        """Emulate signed set-less-than, producing 1 or 0."""
         # signed compare
         sa = a if a < 0x80000000 else a - 0x100000000
         sb = b if b < 0x80000000 else b - 0x100000000
@@ -79,24 +91,29 @@ class CPUModel:
     instr_window: int = 64  # for view convenience
 
     def attach(self, obs: Observer):
+        """Register an observer callback invoked after each cycle."""
         self.observers.append(obs)
 
     def notify(self):
+        """Call every observer so external views can update state."""
         for obs in self.observers:
             obs(self)
 
     def load_words(self, words: List[int], base_addr: int = 0):
+        """Sequentially write a list of machine words starting at base_addr."""
         addr = base_addr
         for w in words:
             self.mem.write_word(addr, w)
             addr += WORD
 
     def fetch(self) -> int:
+        """Grab the instruction pointed at by PC and update fetch stats."""
         instr = self.mem.read_word(self.pc)
         self.stats.bump_instr_fetch()
         return instr
 
     def step(self):
+        """Run one fetch-decode-execute sequence in the single-cycle core."""
         if not self.running:
             return
         raw = self.fetch()
@@ -116,9 +133,11 @@ class CPUModel:
         self.notify()
 
     def _set_next_pc(self, new_pc: int, setter: dict):
+        """Helper used to mutate the caller's next_pc closure variable."""
         setter['next_pc'] = new_pc
 
     def run(self, max_cycles: Optional[int] = None):
+        """Keep stepping until halt or an optional cycle budget is hit."""
         c = 0
         while self.running:
             self.step()
@@ -127,6 +146,7 @@ class CPUModel:
                 break
 
     def execute(self, d: isa.DecodedInstr, set_next_pc):
+        """Implement the behavior for every supported opcode."""
         r = self.regs
         a = self.alu
 

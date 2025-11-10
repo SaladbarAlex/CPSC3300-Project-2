@@ -2,14 +2,17 @@ from . import isa
 
 class TextView:
     def __init__(self, mem_dump_words: int = 32, show_all_mem: bool = False):
+        """Configure how much state the textual view should display."""
         self.mem_dump_words = mem_dump_words
         self.show_all_mem = show_all_mem
         self.prev_mem = {}
 
     def __call__(self, model):
+        """Let the view be used as an observer callback."""
         self.render(model)
 
     def _dump_registers(self, regs):
+        """Format the register file as aligned rows of hex values."""
         rows = []
         names = isa.REG_NAMES
         for i in range(0, 32, 4):
@@ -21,6 +24,7 @@ class TextView:
         return "\n".join(rows)
 
     def _dump_memory(self, mem):
+        """Return a small hex dump of memory words for quick inspection."""
         # Show the first mem_dump_words words and any words written since last cycle
         words = []
         for addr in range(0, self.mem_dump_words * 4, 4):
@@ -33,6 +37,7 @@ class TextView:
         return "\n".join(lines)
 
     def render(self, model):
+        """Print the current cycle, PC, registers, memory, and stats."""
         print("="*78)
         print(f"Cycle {model.stats.cycles:>6} | PC=0x{model.pc:08X} | Running={model.running}")
         print("-"*78)

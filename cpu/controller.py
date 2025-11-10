@@ -3,6 +3,7 @@ import sys
 
 class RunController:
     def __init__(self, model, view, step_mode: bool = False):
+        """Tie the CPU model to a view and choose between run/step modes."""
         self.model = model
         self.view = view
         self.step_mode = step_mode
@@ -11,12 +12,14 @@ class RunController:
         self.model.attach(self.view)
 
     def run_all(self, max_cycles: Optional[int] = None):
+        """Either run continuously or hand off to interactive stepping."""
         if self.step_mode:
             self.run_step_interactive(max_cycles=max_cycles)
         else:
             self.model.run(max_cycles=max_cycles)
 
     def run_step_interactive(self, max_cycles: Optional[int] = None):
+        """Prompt the user each cycle so they can step or quit."""
         c = 0
         while self.model.running:
             _ = input("[Enter=step, q=quit] ")

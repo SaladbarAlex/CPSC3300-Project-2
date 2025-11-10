@@ -14,18 +14,21 @@ reg_alias = {
 }
 
 def parse_reg(tok: str) -> int:
+    """Translate a textual register name/alias into its numeric index."""
     tok = tok.strip().rstrip(',')
     if tok not in reg_alias:
         raise ValueError(f"Unknown register '{tok}'")
     return reg_alias[tok]
 
 def parse_imm(tok: str) -> int:
+    """Parse a decimal or 0x-prefixed immediate value string."""
     tok = tok.strip().rstrip(',')
     if tok.lower().startswith("0x"):
         return int(tok, 16)
     return int(tok, 10)
 
 def parse_offset_addr(tok: str) -> (int,int):
+    """Parse MIPS-style mem operands of the form imm(rs)."""
     # format: imm(rs)
     tok = tok.strip().rstrip(',')
     if '(' in tok and tok.endswith(')'):
@@ -35,6 +38,7 @@ def parse_offset_addr(tok: str) -> (int,int):
     raise ValueError(f"Bad memory operand {tok} (want imm(rs))")
 
 def assemble(lines):
+    """Convert a tiny MIPS-like assembly listing into machine words."""
     # Two-pass to resolve labels for beq/j
     cleaned = []
     labels = {}
@@ -58,6 +62,7 @@ def assemble(lines):
         ops = " ".join(parts[1:])
 
         def split_ops(k=3):
+            """Split the operand list into k comma-separated tokens."""
             return [x.strip() for x in ops.split(',')]
 
         if mn in ('add','sub','and','or','slt'):
