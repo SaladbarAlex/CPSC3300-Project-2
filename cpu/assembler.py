@@ -1,6 +1,11 @@
-# Very small assembler for a minimal MIPS-like subset used in this simulator.
-# This is only for convenience/testing; your Project 1 output can be used directly if you
-# produce hex words per line.
+"""Mini-assembler used for tests and sample programs.
+
+It intentionally mirrors the subset implemented by the simulator. The assembler
+is two-pass (collect labels, then emit words) so that branch/jump targets can be
+expressed with human-readable labels. Keeping it here prevents students from
+having to reuse their entire Project 1 while still allowing `.asm` inputs during
+grading.
+"""
 
 from . import isa
 

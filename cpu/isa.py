@@ -1,3 +1,5 @@
+"""Instruction-set helpers: encode/decode and register naming tables."""
+
 from dataclasses import dataclass
 from typing import Optional
 
@@ -56,6 +58,8 @@ def sign_extend_16(x: int) -> int:
 
 def decode(word: int) -> DecodedInstr:
     """Break a 32-bit instruction word into its constituent fields."""
+    # The decoder keeps policy out of the model: adding a new instruction is a
+    # matter of updating this function plus the execute logic.
     if word == HALT_WORD:
         return DecodedInstr(raw=word, opcode=-1, mnemonic="halt")
     opcode = (word >> 26) & 0x3F

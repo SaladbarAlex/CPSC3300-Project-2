@@ -1,7 +1,11 @@
-# CPSC3300 Project 2 — Single-Cycle CPU Simulator
+# CPSC3300 Project 2 — Single-Cycle MVC MIPS CPU Simulator
+## Design Notes 
+- Team:
+  - Alex Salazar
+  - Joseph Pugmire 
 
 ## Project summary
-This submission implements the Project 2 requirements for a single-cycle, MIPS-style CPU written in Python. The simulator executes one full instruction per cycle, prints a scoreboard every cycle, and records detailed performance counters.
+This submission implements the Project 2 requirements for a single-cycle, MIPS-style CPU written in Python. The simulator executes one full instruction per cycle, prints a scoreboard every cycle.
 
 ## How to run the simulator
 ```bash
@@ -53,37 +57,13 @@ Design choices worth noting:
 - `instr_reads`, `data_reads`, `data_writes`: distinguish instruction fetch traffic from data-side loads/stores.
 - `instr_counts`: retired instruction counts keyed by mnemonic.
 
-These counters are surfaced in the view and will also support later cache/pipeline analysis without changing the ISA layer.
-
 ## Testing checklist
-- Assemble and run `programs/sample.asm` end-to-end; confirm the scoreboard trace matches expectations (e.g., `$t0` increments, memory slot updates, stats show 9 cycles).
+- Assemble and run `programs/sample.asm`; confirm the scoreboard trace matches expectations (e.g., `$t0` increments, memory slot updates, stats show 9 cycles).
 - Craft focused `.asm` snippets for corner cases:
   - Negative immediates (`addi` with -1).
   - Taken and not-taken `beq` paths.
   - Misaligned load/store to verify the memory guard rails.
-- Maintain golden `.bin` fixtures plus saved stat summaries so regression tests can diff outputs after refactors.
 
 ## Future work hooks
 - **Cache insertion**: swap `CPUModel.mem` for a proxy that first checks a simulated cache before hitting main memory, while recording hit/miss counts in `Stats`.
 - **Pipeline**: refactor `CPUModel.step()` into IF/ID/EX/MEM/WB stage helpers with pipeline registers and simple hazard detection/forwarding. The observer interface already enables a stage-by-stage view.
-
-## Design Notes 
-- Team:
-  - Alex Salazar
-  - Joseph Pugmire 
-- Deviations from spec and why:
-  - Added `addi` (opcode `0x08`) even though the base COD 4.4 subset only required R-type, `lw/sw`, `beq`, and `j`; it keeps sample/test programs short by avoiding multi-instruction immediates.
-  - `make run` accepts `--max-cycles` and the controller enforces bounds/misalignment checks (`cpu/model.py:33` onward). The spec only required graceful halting, but the guard prevents runaway loops and surfaces memory bugs immediately.
-  - Stats go beyond the minimum counters by splitting instruction fetches vs. data traffic and counting hidden ALU work (address calc + branch compare). That extra detail is needed for the cache/pipeline work that follows in Project 3.
-- Testing strategy:
-  - Smoke-test the full stack by assembling `programs/sample.asm` and running `make run BIN=programs/sample.bin` (and `make step ...`) to ensure the scoreboard, stats, and HALT handling agree with the hand-traced execution.
-  - Build tiny `.asm` snippets per instruction (e.g., negative immediates for `addi`, fall-through/ taken `beq`, misaligned `lw/sw`) and compare the register/memory dumps against expected traces; this also validates that `Memory` raises on misaligned or OOB addresses.
-  - For regression coverage, keep golden `.bin` fixtures plus expected stat summaries and diff the `TextView` output, so ISA or stats refactors can be checked automatically.
-- Cache insertion plan:
-  - Wrap `Memory` behind a thin interface (same `read_word/write_word`) and add a `CacheMemory` proxy that first probes a configurable direct-mapped/LRU structure before falling back to main memory.
-  - Count hits/misses inside the proxy and expose them through `Stats` (new fields) so the view can print cache metrics without touching controllers.
-  - Because controllers already talk only to `CPUModel.mem`, swapping `CPUModel.mem = CacheMemory(base=Memory(...))` keeps the ISA and view untouched; only the constructor path in `cpu/main.py` needs a flag to opt into the cache.
-- Pipeline plan:
-  - Refactor `CPUModel.step()` into explicit IF/ID/EX/MEM/WB stage functions with pipeline-register dataclasses so each stage can run every tick while sharing the existing `Stats` bookkeeping.
-  - Introduce a simple hazard unit (forwarding paths plus stall logic) inside the model; control hazards start with one-cycle flushes on taken branches/jumps, then can be optimized via predict-not-taken.
-  - Extend `TextView` to show which instruction occupies each stage per cycle (leveraging the observer callbacks) so we can visually debug bubbles/flushes before automating checks.

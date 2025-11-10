@@ -1,5 +1,8 @@
+"""Centralized performance counters (acts like the project's "scoreboard")."""
+
 from dataclasses import dataclass, field
 from collections import defaultdict
+
 
 @dataclass
 class Stats:

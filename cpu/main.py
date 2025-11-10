@@ -1,3 +1,5 @@
+"""CLI entry point that handles assembling input and running the simulator."""
+
 import sys
 import argparse
 from typing import List
@@ -18,6 +20,8 @@ def load_bin_words(path: str) -> List[int]:
                 s = s[:s.index('#')].strip()
             if not s:
                 continue
+            # Accept both explicit 0x-prefixed numbers and bare hex digits so
+            # students can paste data straight from Project 1 dumps.
             if s.lower().startswith("0x"):
                 w = int(s, 16)
             else:
@@ -66,6 +70,7 @@ def main():
     view = TextView(mem_dump_words=32)
     ctl = RunController(model, view, step_mode=args.step)
 
+    # Run either in free-running or single-step mode depending on CLI flags.
     ctl.run_all(max_cycles=args.max_cycles)
 
 if __name__ == "__main__":

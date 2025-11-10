@@ -1,5 +1,8 @@
+"""Controller layer that glues the CPU model to a view and handles runtime mode."""
+
 from typing import Optional
 import sys
+
 
 class RunController:
     def __init__(self, model, view, step_mode: bool = False):
@@ -20,6 +23,9 @@ class RunController:
 
     def run_step_interactive(self, max_cycles: Optional[int] = None):
         """Prompt the user each cycle so they can step or quit."""
+        # This loop mirrors hardware single-stepping: the model only advances
+        # when the user presses Enter. `q` lets us bail without toggling state
+        # inside the CPU itself.
         c = 0
         while self.model.running:
             _ = input("[Enter=step, q=quit] ")

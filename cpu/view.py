@@ -1,4 +1,12 @@
+"""Text-only view that prints a scoreboard every cycle.
+
+This file is the "View" slice of MVC. It does not influence execution; it only
+observes the model and formats the state so humans can follow along while
+grading or debugging.
+"""
+
 from . import isa
+
 
 class TextView:
     def __init__(self, mem_dump_words: int = 32, show_all_mem: bool = False):
@@ -13,6 +21,8 @@ class TextView:
 
     def _dump_registers(self, regs):
         """Format the register file as aligned rows of hex values."""
+        # Registers are grouped four per row to keep the output manageable. The
+        # names table comes from `isa.py`, so any alias changes propagate here.
         rows = []
         names = isa.REG_NAMES
         for i in range(0, 32, 4):
@@ -38,6 +48,9 @@ class TextView:
 
     def render(self, model):
         """Print the current cycle, PC, registers, memory, and stats."""
+        # The ASCII separators make the scoreboard easy to scan when running
+        # dozens of cycles. Views are intentionally stateless so they can be
+        # swapped for GUI/CSV loggers later.
         print("="*78)
         print(f"Cycle {model.stats.cycles:>6} | PC=0x{model.pc:08X} | Running={model.running}")
         print("-"*78)
