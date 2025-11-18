@@ -7,3 +7,12 @@
 0x08000008
 0x01095020
 0xFFFFFFFF
+#Initialize $t0 = 0
+#Add 42 → $t0 = 42
+#Store $t0 (42) to memory at 0x100
+#Load that value into $t1
+#Compare $t0 and $t1; if equal, skip the next line
+#Increment $t0 by 1 (would only happen if they were not equal)
+#Jump to address 0x20 (loops back)
+#Add $t0 + $t1 → $t2
+#0xFFFFFFFF halts
